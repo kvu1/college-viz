@@ -1,0 +1,79 @@
+---
+title: "The Economics of Majoring in Economics: A Glance at College Majors"
+author: "Jonathan Kay and Kyle Vu"
+date: "2/25/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r}
+# Load the necessary libraries
+library(dplyr, warn.conflicts = FALSE)
+library(ggplot2)
+library(fivethirtyeight)
+library(ggthemes)
+library(scales)
+```
+
+  One of our authors, Kyle, just submitted his sophomore plan earlier this month. Though he was relieved to have finally declared his Economics/Statistics degree, he knew his decision came at a steep price - he had to inform his mother that he was no longer pursuing pre-med. "Economics and statistics?" she said. "That's fine, as long as you can get a job with enough income to cover the rent you’ll have to pay from living in our basement for the next few years.” 
+  
+  It's a widely-held belief that if you want a job and a decent salary, you choose a career in natural sciences and engineering; otherwise, you major in the humanities or social sciences. Using [data on recent college B.A. graduates](https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/) from FiveThirtyEight, we decided to see if that perception was a reality.
+
+  (Note: we have filtered out major groups not offered at Swarthmore like Health and Business, and sorted the remainder according to our three divisional classifications: Humanities, the Social Sciences, and the Natural Sciences, referred to at Swarthmore as Natural Sciences and Engineering (NSE).)
+
+
+```{r}
+# Filter the original 538 dataset to include only majors offered at Swarthmore College,
+# Mutate to add desired proportion statistics for each major
+college_data <- college_recent_grads %>% 
+  filter(!(major_category %in% c("Agriculture & Natural Resources", "Business", "Communications & Journalism", "Industrial Arts & Consumer Services", "Health", "Interdisciplinary"))) %>%
+  mutate(college_jobs_share = college_jobs/(non_college_jobs + college_jobs),
+         noteworthy = (major %in% c("Biology", "Chemistry", "Economics")))  
+
+# Classify majors by divisions (as defined by Swarthmore College) 
+college_data$division <- ""
+
+college_data[college_data$major_category %in% c("Arts", "Humanities & Liberal Arts"), "division"] <- "Humanities"
+
+college_data[college_data$major_category %in% c("Education", "Law & Public Policy", "Social Science", "Psychology & Social Work"), "division"] <- "Social Sciences"
+
+college_data[college_data$major_category %in% c("Biology & Life Science", "Computers & Mathematics", "Engineering", "Physical Sciences"), "division"] <- "Natural Sciences"
+```
+
+```{r}
+# First graphic: boxplot, plus annotations from Swarthmore data.
+ggplot(data = college_data, mapping = aes(x = division, y = median)) + 
+  geom_boxplot(fill = c("firebrick", "steelblue", "olivedrab"), alpha = .8, width = .5) + 
+  geom_hline(yintercept = 36000, alpha = .6, linetype = "dashed") + 
+  geom_hline(yintercept = 49500, alpha = .6, linetype = "dashed") + 
+  geom_hline(yintercept = 55000, alpha = .6, linetype = "dashed") + 
+  geom_hline(yintercept = 68000, alpha = .6, linetype = "dashed") + 
+  annotate("text", 1.40, 53500, label = "Swat: NSE", angle = 90) + 
+  annotate("text", 2.65, 48000, label = "Swat: Total", angle = 90) +
+  annotate("text", 2.75, 66500, label = "Swat: Economics", angle = 90) +
+  annotate("text", 2, 34500, label = "Swat: All other majors", angle = 90) + 
+  coord_flip() + theme_minimal() + scale_y_continuous(labels = comma) +
+  labs(title = "New Graduates' Median Income by Academic Division", subtitle = "Data: FiveThirtyEight (2014), Swarthmore Career Services (2015)",x = "Division", y = "Median Income ($)")
+
+``` 
+
+  As perhaps expected, the Natural Sciences division has the highest median starting income, the greatest spread of incomes, and the highest-earning single major, petroleum engineering, which is the only major in this dataset with a six-figure median salary. The Humanities and Social Sciences, meanwhile, have much lower median incomes: their 75th percentile for median earnings fall below the Natural Sciences' 25th percentile earnings, and their median incomes hover in the mid-30,000s. Although Social Sciences majors typically earned more than Humanities, the division had more variation and included the four lowest-earning single majors.
+
+  The dotted lines represent Swarthmore graduate earnings, using [data]('https://www.swarthmore.edu/career-services/post-graduation-statistics') from the College's Career Services Office. Swarthmore graduates tend to earn higher than the national median for their division across-the-board. (The college only provides discipline-specific data for NSE and Economics majors, so “All other majors” represents Humanities and Social Sciences majors minus Economics majors.) Generally, the Social Sciences and Humanities continue to remain relatively lower earners. Swarthmore Economics majors, however, had earnings exceeding even the 75th percentile of the national spread for the lucrative NSE division; this matched Economics' majors high national earnings, $47,000 a year.
+
+```{r}
+# Generate second graphic (scatterplot)
+ggplot(data = college_data, mapping = aes(y = unemployment_rate, x = college_jobs_share, size = total, color = division, shape = noteworthy)) + 
+  geom_point(alpha = .85) +
+  annotate("text", x = .740, y = .150, label = c("As the share of\n workers in college jobs\n increases, we expect\n the unemployment rate for a\n major to generally decrease."), color = "black", size = 2.5) +
+  scale_color_brewer(palette = "Set1") +
+  theme_minimal() + scale_size_continuous(label = comma) +
+  labs(title = "Recent Grads' Unemployment Rate and College Job Share by Major", subtitle = "Data: FiveThirtyEight (2014)", y = "Proportion of Unemployed Graduates", x = "Proportion of Workers in Jobs\n Requiring a College Degree", color = "Division", size = "Number of Students", shape = "Does Kyle's mom care about this major?")
+```
+
+  On a more granular level, as the typical major's unemployment rate rises, the share of graduates working jobs requiring college degrees decreases. Most of the Natural Sciences majors had relatively low unemployment rates and high college job shares. The economic prospects for Humanities majors, meanwhile, appear relatively dim: most cluster within an unemployment range of 5 to 10% and a 25 to 50% college degree share in the top left corner of the spread. Social Sciences majors were a mixed bag, with some majors exhibiting a low unemployment rate and high college jobs share comparable with the typical Natural Science major and others faring more poorly and clustering with the Humanities majors. It's worth noting, however, that the highest unemployment rates for individual majors can be found in the Social Sciences and Natural Sciences division.
+
+  Overall, the dominant perceptions of different disciplines' career prospects seem born out by the data, with NSE majors generally outperforming Humanities and Social Sciences majors in median starting income, employment rate, and employment rate in jobs requiring college degrees. Kyle's mom, however, should take heart- Economics majors, especially at Swarthmore, typically earn enough to cover the rent.
