@@ -1,2 +1,2 @@
-# college-viz
+# The Economics of Majoring in Economics: A Glance at College Majors
 My classmate Jonathan Kay and I created visualizations about and analyzed differential economic outcomes for different college majors nationwide using data from FiveThirtyEight.
